@@ -24,6 +24,7 @@ long randNumber; // Random Pokemon ID
 char INSERT_DATA[] = "INSERT INTO arduinomon.pokemon (pokemon) VALUES (%d)"; // Insert generated Pokemon
 char query[128]; // Specifies accepted character values
 
+// Setup process when starting the Arduino
 void setup() {
 	Wire.begin();
 	Wire.beginTransmission(MPU_addr);
@@ -72,7 +73,7 @@ void setup() {
 	}
 }
 
-// Main loop
+// Main code loop that runs continously on successful setup.
 void loop() { 
 	randomSeed(AcX + AcY + AcZ); // Initialize a random seed based on a "throw"
 
