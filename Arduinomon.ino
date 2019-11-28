@@ -5,24 +5,24 @@
 #include <Wire.h>
 #include "secret.h" // This is where WiFi and MySQL credentials are saved
 
-char ssid[] = SECRET_SSID;
-char pass[] = SECRET_PASS; // WPA
+char ssid[] = SECRET_SSID; // Network name
+char pass[] = SECRET_PASS; // Network password
 int status = WL_IDLE_STATUS; // Wifi radio's status
 
 IPAddress server_addr(SECRET_IP); // IP of the MySQL *server* here
 char user[] = SECRET_USERNAME; // MySQL user login username
 char password[] = SECRET_PASSWORD; // MySQL user login password
 
-WiFiClient client;
-MySQL_Connection conn((Client *)&client);
+WiFiClient client; //Er dette en header?
+MySQL_Connection conn((Client *)&client); //Er dette en header?
 
 const int MPU_addr=0x68; // I2C address of the MPU-6050
-int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ; 
 
 long randNumber; // Random Pokemon ID
 
 char INSERT_DATA[] = "INSERT INTO arduinomon.pokemon (pokemon) VALUES (%d)"; // Insert generated Pokemon
-char query[128];
+char query[128]; // Specifies accepted character values
 
 void setup() {
 	Wire.begin();
@@ -38,32 +38,32 @@ void setup() {
 	// check for the WiFi module:
 	if (WiFi.status() == WL_NO_MODULE) {
 		Serial.println("Communication with WiFi module failed!");
-		// don't continue
+		// If no WiFI module detected, don't continue
 		while (true);
 	}
 
-	String fv = WiFi.firmwareVersion();
+	String fv = WiFi.firmwareVersion(); // Checks if WiFi module firmware is updated
 	if (fv < "1.0.0") {
 		Serial.println("Please upgrade the firmware!");
 	}
 
-	// attempt to connect to Wifi network:
-	while (status != WL_CONNECTED) {
+	// Attempts to connect to Wifi network with credentials SECRET_SSID and SECRET_PASS
+	while (status != WL_CONNECTED) { 
 		Serial.print("Attempting to connect to WPA SSID: ");
 		Serial.println(ssid);
 		// connect to WPA/WPA2 network:
 		status = WiFi.begin(ssid, pass);
 
-		// wait 5 seconds for connection:
+		// Waits 5 seconds for connection:
 		delay(5000);
 	}
 
-	// you're connected now, so print out the data:
+	// Confirms a connection and prints out the network data
 	Serial.println("You're connected to the network");
 	printCurrentNet();
 	printWifiData();
 
-	// connect to database
+	// Connects to database with credentials SECRET_USERNAME and SECRET_PASSWORD
 	Serial.println("Attempting to connect to database...");
 	if (conn.connect(server_addr, 3306, user, password)) {
 		delay(1000);
@@ -72,7 +72,8 @@ void setup() {
 	}
 }
 
-void loop() {
+// Main loop
+void loop() { 
 	randomSeed(AcX + AcY + AcZ); // Initialize a random seed based on a "throw"
 
 	Wire.beginTransmission(MPU_addr);
@@ -87,6 +88,8 @@ void loop() {
 	GyY=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
 	GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
+	// If (accelerometer detects movement that is over 5000) run code.
+	// Variable can be changed to make accelerometer more or less sensitive to movement.
 	if (AcX > 5000) {
 		Serial.println("Collision detected!");
 		Serial.print("AcX = "); Serial.print(AcX);
@@ -102,9 +105,9 @@ void loop() {
 
 		// Generate random Pokemon from Gen 1
 		Serial.println("Generating Pokemon...");
-		randNumber = random(1, 151);
+		randNumber = random(1, 151); // A Pokemon is given life
 
-		sprintf(query, INSERT_DATA, randNumber);
+		sprintf(query, INSERT_DATA, randNumber); // Accepted character values, SQL command and the randomly generated Pokemon ID
 
 		// Execute the query
 		cur_mem->execute(query);
@@ -113,12 +116,13 @@ void loop() {
 		delete cur_mem;
 		Serial.println("Pokemon generated!");
 		
+		// Cooldown between each generated Pokemon
 		int seconds = 0;
 
-		while (seconds < 10) {
+		while (seconds < 10) { // Set to 10 seconds
 			Serial.println(seconds);
 			seconds++;
-			delay(1000);
+			delay(1000); // Delay in miliseconds
 		}
 
 		//delay(10000);
@@ -126,7 +130,8 @@ void loop() {
 	delay(333);
 }
 
-void printWifiData() {
+// Gives information about the Arduino network status
+void printWifiData() { 
 	// print your board's IP address:
 	IPAddress ip = WiFi.localIP();
 	Serial.print("IP Address: ");
@@ -140,6 +145,7 @@ void printWifiData() {
 	Serial.println();
 }
 
+// Gives information about the currently connected network
 void printCurrentNet() {
 	// print the SSID of the network you're attached to:
 	Serial.print("SSID: ");
@@ -163,6 +169,7 @@ void printCurrentNet() {
 	Serial.println();
 }
 
+// Used to print mac address for router and Arduino
 void printMacAddress(byte mac[]) {
 	for (int i = 5; i >= 0; i--) {
 		if (mac[i] < 16) {
